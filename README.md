@@ -1,6 +1,6 @@
 ## magma :fire:
 
-This repo contains wrapper functions to train neural network models on pytorch and pytorch geometric (for GNNs).
+This repo contains wrapper functions to train neural network models on [pytorch](https://pytorch.org/) and [pytorch geometric](https://pytorch-geometric.readthedocs.io/en/latest/) (for GNNs).
 
 
 ### Installation 
@@ -29,11 +29,6 @@ Later on, you can deactivate the environment by running:
 
 `$ conda deactivate`
 
-Run
-
-`$ pip install -e .`
-
-in the root directory after cloning the repo. 
 
 2. a. Install libraries using `pip`
 
@@ -50,5 +45,15 @@ Pytorch geometric is a library that enables working with graph neural networks. 
 python -m install_torch_geom.py
 ```
 
+
+4. Install `magma`
+
+Run:
+
+`$ pip install -e .`
+
+in the root directory to install the `magma` library.
+
 ### Examples 
 
+You can check an example of building a GNN and visualizing the graph embeddings using `magma` in this [notebook](https://nbviewer.jupyter.org/github/manuflores/sandbox/blob/master/notebooks/graphconvnet_softmax_drugbank.ipynb).

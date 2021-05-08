@@ -33,14 +33,14 @@ from sklearn.utils import sparsefuncs
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, IterableDataset, DataLoader
-
+import torch_geometric
 
 def train_supervised_gcn(
     model:nn.Module,
-    data:torch_geometric.data.Data, 
-    loss_fn, 
-    optimizer, 
-    multiclass = False, 
+    data:torch_geometric.data.Data,
+    loss_fn,
+    optimizer,
+    multiclass = False,
     n_out = 1
 )->torch.tensor:
     """Single fwd-bwd pass on GraphConvNet model."""
@@ -504,7 +504,7 @@ def supervised_model_predict(
 
 def train_vae(
 	model:nn.Module,
-	input_tensor, 
+	input_tensor,
 	optimizer)->torch.tensor:
     """
     Forward-backward pass of a VAE model.
@@ -528,7 +528,7 @@ def train_vae(
 
 def validate_vae(
 	model:nn.Module,
-	input_tensor, 
+	input_tensor,
 	optimizer)->torch.tensor:
 
     reconstructed, mu, log_var = model(input_tensor)
@@ -550,19 +550,19 @@ def vae_trainer(
     Params
     ------
 	n_epochs(int)
-		Number of epochs to run the model. 
+		Number of epochs to run the model.
 
 	train_loader()
-		Dataloader for training set. 
+		Dataloader for training set.
 
 	val_loader()
 		Dataloader for validation set.
 
 	model(nn.Module)
-		VAE model. 
+		VAE model.
 
 
-    Returns 
+    Returns
     -------
     train_loss_vector
     val_loss_vector
@@ -649,7 +649,7 @@ def try_gpu(i=0):
     return torch.device('cpu')
 
 def accuracy(y_pred, y_true):
-	"Returns the accuracy between predicted and true labels."
+    "Returns the accuracy between predicted and true labels."
     acc = torch.eq(y_true, y_pred).sum().item() / y_true.shape[0]
     return acc
 

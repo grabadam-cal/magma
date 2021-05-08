@@ -4,7 +4,9 @@
 # - [>]  gat
 # - [>]  supervised_model
 # - [>]  vae
+# - [>]  JointEmbedding
 
+import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -22,65 +24,65 @@ from torch_geometric.nn import global_add_pool, global_mean_pool, global_max_poo
 
 
 class BnLinear(nn.Module):
-	"Linear layer with batch normalization."
-    def __init__(self, input_dim, output_dim, kwargs = None):
-        super(BnLinear, self).__init__()
+	"""Linear layer with batch normalization."""
+	def __init__(self, input_dim, output_dim, kwargs = None):
+	    super(BnLinear, self).__init__()
 
-        if kwargs is not None:
-            self.linear = nn.Linear(input_dim, output_dim, **kwargs)
-        else:
-            self.linear = nn.Linear(input_dim, output_dim)
+	    if kwargs is not None:
+	        self.linear = nn.Linear(input_dim, output_dim, **kwargs)
+	    else:
+	        self.linear = nn.Linear(input_dim, output_dim)
 
-        self.bn = nn.BatchNorm1d(output_dim)
+	    self.bn = nn.BatchNorm1d(output_dim)
 
-    def forward(self, x):
-        x = self.linear(x)
-        x = self.bn(x)
+	def forward(self, x):
+	    x = self.linear(x)
+	    x = self.bn(x)
 
-        return x
+	    return x
 
 class BnGraphConvLayer(GCNConv):
-	"Graph Conv Layer with batch normalization."
-    def __init__(self, in_channels, out_channels, **kwargs):
-        super(GCNConv, self).__init__()
+	"""Graph Conv Layer with batch normalization."""
+	def __init__(self, in_channels, out_channels, **kwargs):
+	    super(GCNConv, self).__init__()
 
-        self.graph_conv = GCNConv(in_channels, out_channels)
-        self.bn = nn.BatchNorm1d(out_channels)
-        self.in_channels = in_channels
-        self.out_channels = out_channels
+	    self.graph_conv = GCNConv(in_channels, out_channels)
+	    self.bn = nn.BatchNorm1d(out_channels)
+	    self.in_channels = in_channels
+	    self.out_channels = out_channels
 
-    def forward(self, x, edge_index):
-        x = self.graph_conv(x, edge_index)
-        x = self.bn(x)
+	def forward(self, x, edge_index):
+	    x = self.graph_conv(x, edge_index)
+	    x = self.bn(x)
 
-        return x
+	    return x
 
 class BnGATConv(nn.Module):
-	"Graph Attention layer with Batch normalization."
-    def __init__(self, in_channels, out_channels, kwargs={}):
-        """Batchnorm Graph Attention Conv layer. """
-        super(BnGATConv, self).__init__()
+	"""Graph Attention layer with Batch normalization."""
+	def __init__(self, in_channels, out_channels, kwargs={}):
+	    """Batchnorm Graph Attention Conv layer. """
+	    super(BnGATConv, self).__init__()
 
 
-        self.graph_conv = GATConv(
-            in_channels,
-            out_channels,
-            **kwargs
-        )
+	    self.graph_conv = GATConv(
+	        in_channels,
+	        out_channels,
+	        **kwargs
+	    )
 
-        self.bn = nn.BatchNorm1d(out_channels)
-        self.in_channels = in_channels
-        self.out_channels = out_channels
+	    self.bn = nn.BatchNorm1d(out_channels)
+	    self.in_channels = in_channels
+	    self.out_channels = out_channels
 
-    def forward(self, x, edge_index):
-        x = self.graph_conv(x, edge_index)
-        x = self.bn(x)
+	def forward(self, x, edge_index):
+	    x = self.graph_conv(x, edge_index)
+	    x = self.bn(x)
 
-        return x
+	    return x
 
 
 class GraphConvNetwork(torch.nn.Module):
-	"A graph neural network model based with Graph Convolutional Blocks."
+    "A graph neural network model based with Graph Convolutional Blocks."
     def __init__(
         self,
         dims_conv,
@@ -111,7 +113,7 @@ class GraphConvNetwork(torch.nn.Module):
 
         model_type (str, default = `multiclass`)
             Describes the type of supervised model to use.
-            Defaults to multiclass i.e. softmax classification. 
+            Defaults to multiclass i.e. softmax classification.
             Needs to be one of ["regression", "multiclass", "binary", "multilabel"]
 
         """
@@ -256,10 +258,10 @@ class GraphConvNetwork(torch.nn.Module):
 
 
 class GraphAttentionNetwork(nn.Module):
-	"""
-	Graph Convolutional Net with attention mechanism for supervised model tasks.
-	Contains functionality to get node and graph embeddings. 
-	"""
+    """
+    Graph Convolutional Net with attention mechanism for supervised model tasks.
+    Contains functionality to get node and graph embeddings.
+    """
     def __init__(
         self,
         dims_conv,
@@ -926,3 +928,39 @@ class VariationalAutoencoder(nn.Module):
 
         return gaussian_samples
 
+class JointEmbedding(nn.Module):
+    """
+    Joint embedding using contrastive learning training.
+    """
+    def __init__(self, mol_encoder, cell_encoder):
+        super(JointEmbedding, self).__init__()
+
+        self.molecule_encoder = mol_encoder
+        self.cell_encoder = cell_encoder
+
+        # Learn temperature parameter
+        self.logit_scale =nn.Parameter(torch.rand(1)*4)
+
+    def encode_molecule(self, molecule_batch):
+        molecule_embedding = self.molecule_encoder.project(
+            molecule_batch
+        )
+        return molecule_embedding
+
+    def encode_cell(self, cell_batch):
+        cell_embedding = self.cell_encoder.project(cell_batch)
+        return cell_embedding
+
+    def forward(self, molecules, cells):
+        cell_embedding = self.encode_cell(cells)
+        mol_embedding = self.encode_molecule(molecules)
+
+        # Normalize embeddings : make unit vectors
+        cell_embedding = cell_embedding / cell_embedding.norm(dim= -1, keepdim = True)
+        mol_embedding = mol_embedding / mol_embedding.norm(dim= -1, keepdim = True)
+
+        # Get cosine similarities
+        logit_scale = self.logit_scale.exp()
+        logits = logit_scale* mol_embedding@cell_embedding.t()
+
+        return logits
