@@ -1,0 +1,43 @@
+name: magma
+channels:
+- anaconda
+- pytorch
+- pyviz
+- rdkit
+- plotly
+- conda-forge
+- defaults
+dependencies:
+- python>=3.7
+- pip
+- pytorch>=1.8.0
+- torchvision>=0.8.0
+- holoviz
+- jupyter
+- jupyterlab
+- umap-learn
+- ipykernel
+- numpy
+- numba
+- scipy
+- pandas
+- statsmodels
+- networkx
+- plotly
+- rdkit
+- scikit-image
+- scikit-learn
+- toolz
+- seaborn
+- matplotlib
+- tqdm
+- mordred
+- selenium
+- bokeh
+- nb_conda_kernels
+- pip:
+  - blackcellmagic
+  - anndata
+  - pytorch-metric-learning
+  - multiprocess
+  - watermark
